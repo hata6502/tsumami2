@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head prefix="og: http://ogp.me/ns#">
+    <meta charset="utf-8" />
+
+    <meta
+      name="viewport"
+      content="minimum-scale=1, initial-scale=1, width=device-width"
+    />
+
+    <title>tsumami2</title>
+  </head>
+
+  <body style="overscroll-behavior: none">
+    <div style="display: inline-block">
+      <div id="player"></div>
+
+      <div style="position: relative">
+        <div id="tsumami" style="position: absolute; top: 0; user-select: none">
+          |
+        </div>
+      </div>
+
+      <p>|ボタンをドラッグする。<br /></p>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module">
+      window.onYouTubeIframeAPIReady = () => {
+        const player = new YT.Player("player", {
+          videoId: "kEycsvvyv6I",
+          width: Math.min(window.innerWidth, 640) - 32,
+          events: {},
+        });
+
+        const tsumamiElement = document.querySelector("#tsumami");
+
+        let isPressing = false;
+
+        const down = () => {
+          isPressing = true;
+        };
+
+        tsumamiElement.addEventListener("mousedown", (event) => {
+          down();
+        });
+
+        tsumamiElement.addEventListener("touchstart", (event) => {
+          down();
+        });
+
+        let prevClientX = 0;
+        let prevSeekTime = 0;
+
+        const move = (clientX, clientY, allowSeekAhead) => {
+          if (!isPressing) {
+            return;
+          }
+
+          const deltaX = clientX - prevClientX;
+          const deltaY = Math.max((Math.abs(clientY - tsumamiElement.getBoundingClientRect().top)- 16)/10, 1);
+          const deltaTime = ((deltaX / 640) * player.getDuration()) / deltaY;
+          const seekTime = prevSeekTime + deltaTime;
+
+          tsumamiElement.style.left = `${
+            (seekTime / player.getDuration()) * 640
+          }px`;
+
+          player.seekTo(seekTime, allowSeekAhead);
+
+          prevClientX = clientX;
+          prevSeekTime = seekTime;
+        };
+
+        document.addEventListener("mousemove", (event) => {
+          move(event.clientX, event.clientY, false);
+        });
+
+        document.addEventListener("touchmove", (event) => {
+          move(
+            event.changedTouches[0].clientX,
+            event.changedTouches[0].clientY,
+            false
+          );
+        });
+
+        const up = (clientX, clientY) => {
+          move(clientX, clientY, true);
+          isPressing = false;
+        };
+
+        document.addEventListener("mouseup", (event) => {
+          up(event.clientX, event.clientY);
+        });
+
+        document.addEventListener("touchend", (event) => {
+          up(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+        });
+      };
+    </script>
+  </body>
+</html>
